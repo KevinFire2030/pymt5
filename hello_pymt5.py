@@ -113,6 +113,18 @@ if symbol_info != None:
     print("symbol_info_dict() as dataframe:")
     print(df)
 
+# 최근 NAS100 틱 표시
+lasttick=mt5.symbol_info_tick("NAS100")
+print(lasttick)
+# 목록 형식으로 틱 필드 값 표시
+print("Show symbol_info_tick(\"NAS100\")._asdict():")
+symbol_info_tick_dict = mt5.symbol_info_tick("NAS100")._asdict()
+for prop in symbol_info_tick_dict:
+    print("  {}={}".format(prop, symbol_info_tick_dict[prop]))
+
+
+
+
 mt5.shutdown()
 
 print("된다! 하면된다~!!")

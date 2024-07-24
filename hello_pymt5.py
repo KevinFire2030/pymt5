@@ -89,6 +89,30 @@ for s in group_symbols:
     print(s.name)
 print()
 
+# MarketWatch에서 EURJPY 심볼 활성화 시도
+selected = mt5.symbol_select("NAS100", True)
+if not selected:
+    print("NAS100 선택 실패")
+    mt5.shutdown()
+    quit()
+
+# EURJPY 심볼 속성 표시
+symbol_info = mt5.symbol_info("NAS100")
+if symbol_info != None:
+    # 터미널 데이터를 '있는 그대로' 표시
+    print(symbol_info)
+    print("NAS100: spread =", symbol_info.spread, "  digits =", symbol_info.digits)
+    # 심볼 속성 표시 목록
+    print("Show symbol_info(\"NAS100\")._asdict():")
+    symbol_info_dict = mt5.symbol_info("NAS100")._asdict()
+    for prop in symbol_info_dict:
+        print("  {}={}".format(prop, symbol_info_dict[prop]))
+
+    # 딕셔너리를 데이터프레임으로 변환하여 출력
+    df = pd.DataFrame(list(symbol_info_dict.items()), columns=['property', 'value'])
+    print("symbol_info_dict() as dataframe:")
+    print(df)
+
 mt5.shutdown()
 
 print("된다! 하면된다~!!")

@@ -1,6 +1,6 @@
 import MetaTrader5 as mt5
 import pandas as pd
-
+import time
 
 def initialize_mt5():
     #path = "C:\\Program Files\\MetaTrader 5\\terminal64.exe"
@@ -123,6 +123,26 @@ for prop in symbol_info_tick_dict:
     print("  {}={}".format(prop, symbol_info_tick_dict[prop]))
 
 
+
+# EURUSD(Depth of Market)에 대한 마켓 심층 업데이트 구독
+if mt5.market_book_add('NAS100'):
+  # 시장 심층 데이터를 10회 반복 수집
+   for i in range(10):
+        # 마켓 심층(Depth of Market) 콘텐츠 확보
+        items = mt5.market_book_get('NAS100')
+        # 마켓의 전체 뎁스를 '있는 그대로' 단일 문자열로 표시
+        print(items)
+        # 이제 각 주문을 구분하여 표시하여 보다 명확히 확인할 수 있습니다
+        if items:
+            for it in items:
+                # 주문 내용
+                print(it._asdict())
+        # 마켓 수준 데이터의 다음 요청이 있기 전에 5초간 일시 중지
+        time.sleep(5)
+  # 시장 수준 업데이트(Depth of Market) 구독을 취소합니다.
+   mt5.market_book_release('NAS100')
+else:
+    print("mt5.market_book_add('NAS100') failed, error code =",mt5.last_error())
 
 
 mt5.shutdown()

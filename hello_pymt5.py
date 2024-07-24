@@ -158,7 +158,7 @@ utc_from = datetime(2024, 7, 24, tzinfo=timezone)
 rates = mt5.copy_rates_from("NAS100", mt5.TIMEFRAME_D1, utc_from, 10)
 
 # MetaTrader 5 터미널 연결 종료
-mt5.shutdown()
+#mt5.shutdown()
 # 수집된 데이터의 각 요소를 새 줄로 표시
 print("수집된 데이터를 '있는 그대로' 표시")
 for rate in rates:
@@ -173,20 +173,15 @@ rates_frame['time'] = pd.to_datetime(rates_frame['time'], unit='s')
 print("\n데이터와 함께 dataframe 표시")
 print(rates_frame)
 
-"""
+
 # get 10 GBPUSD D1 bars from the current day
 rates = mt5.copy_rates_from_pos("NAS100", mt5.TIMEFRAME_H1, 0, 10)
 
 # MetaTrader 5 터미널 연결 종료
-mt5.shutdown()
+#mt5.shutdown()
 # 수집된 데이터의 각 요소를 새 줄로 표시
 print("수집된 데이터를 '있는 그대로' 표시")
 
-if rates != None:
-    for rate in rates:
-        print(rate)
-else:
-    print("None : ", mt5.last_error())
 
 # 가져온 데이터로 DataFrame 생성
 rates_frame = pd.DataFrame(rates)
@@ -196,6 +191,7 @@ rates_frame['time'] = pd.to_datetime(rates_frame['time'], unit='s')
 # 데이터 표시
 print("\n데이터와 함께 dataframe 표시")
 print(rates_frame)
+
 """
 
 # set time zone to UTC
@@ -222,5 +218,63 @@ rates_frame['time'] = pd.to_datetime(rates_frame['time'], unit='s')
 # display data
 print("\n데이터와 함께 dataframe 표시")
 print(rates_frame.head(10))
+
+"""
+
+# set time zone to UTC
+timezone = pytz.timezone("Etc/UTC")
+# 로컬 시간대 오프셋 구현을 방지하기 위해 UTC 표준 시간대에 'datetime' 개체를 생성
+utc_from = datetime(2024, 7, 24, tzinfo=timezone)
+# UTC 표준 시간대로 2019.10.01.부터 시작하는 100 000 EURUSD 틱 요청
+ticks = mt5.copy_ticks_from("NAS100", utc_from, 100000, mt5.COPY_TICKS_ALL)
+print("Ticks received:", len(ticks))
+
+# 새 라인의 각 틱에 데이터 표시
+print("수집된 틱을 '있는 그대로' 표시")
+count = 0
+for tick in ticks:
+    count += 1
+    print(tick)
+    if count >= 10:
+        break
+
+# 가져온 데이터로 DataFrame 생성
+ticks_frame = pd.DataFrame(ticks)
+# 시간(초)을 날짜 시간 형식으로 변환
+ticks_frame['time'] = pd.to_datetime(ticks_frame['time'], unit='s')
+
+# display data
+print("\n틱과 함께 dataframe 표시")
+print(ticks_frame)
+
+# set time zone to UTC
+timezone = pytz.timezone("Etc/UTC")
+# 로컬 시간대 오프셋 구현을 방지하기 위해 UTC 표준 시간대에 'datetime' 개체를 생성합니다
+utc_from = datetime(2024, 1, 1, tzinfo=timezone)
+utc_to = datetime(2024, 7, 24, tzinfo=timezone)
+# request AUDUSD ticks within 11.01.2020 - 11.01.2020
+ticks = mt5.copy_ticks_range("NAS100", utc_from, utc_to, mt5.COPY_TICKS_ALL)
+print("Ticks received:", len(ticks))
+
+# MetaTrader 5 터미널에 대한 연결 종료
+#mt5.shutdown()
+
+# 새 라인의 각 틱에 데이터 표시
+print("수집된 틱을 '있는 그대로' 표시합니다.")
+count = 0
+for tick in ticks:
+    count += 1
+    print(tick)
+    if count >= 10:
+        break
+
+# 가져온 데이터로 DataFrame 생성
+ticks_frame = pd.DataFrame(ticks)
+# 시간(초)을 날짜 시간 형식으로 변환
+ticks_frame['time'] = pd.to_datetime(ticks_frame['time'], unit='s')
+
+# display data
+print("\n틱과 함께 dataframe 표시")
+print(ticks_frame)
 
 print("된다! 하면된다~!!")

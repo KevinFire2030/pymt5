@@ -1,6 +1,9 @@
 import MetaTrader5 as mt5
 import pandas as pd
 import time
+from datetime import datetime
+# 표준 시간대 작업을 위한 pytz 모듈
+import pytz
 
 def initialize_mt5():
     #path = "C:\\Program Files\\MetaTrader 5\\terminal64.exe"
@@ -123,7 +126,7 @@ for prop in symbol_info_tick_dict:
     print("  {}={}".format(prop, symbol_info_tick_dict[prop]))
 
 
-
+"""
 # EURUSD(Depth of Market)에 대한 마켓 심층 업데이트 구독
 if mt5.market_book_add('NAS100'):
   # 시장 심층 데이터를 10회 반복 수집
@@ -143,6 +146,30 @@ if mt5.market_book_add('NAS100'):
    mt5.market_book_release('NAS100')
 else:
     print("mt5.market_book_add('NAS100') failed, error code =",mt5.last_error())
+"""
+
+# 표준 시간대를 UTC로 설정
+timezone = pytz.timezone("Etc/UTC")
+# 로컬 시간대 오프셋 구현을 방지하기 위해 UTC 표준 시간대에 'datetime' 개체를 생성합니다.
+utc_from = datetime(2024, 7, 24, tzinfo=timezone)
+# UTC 표준 시간대로 2020년 1월 10일부터 10개의 EURD H4 막대를 설치
+rates = mt5.copy_rates_from("NAS100", mt5.TIMEFRAME_H1, utc_from, 10)
+
+# MetaTrader 5 터미널 연결 종료
+mt5.shutdown()
+# 수집된 데이터의 각 요소를 새 줄로 표시
+print("수집된 데이터를 '있는 그대로' 표시")
+for rate in rates:
+    print(rate)
+
+# 가져온 데이터로 DataFrame 생성
+rates_frame = pd.DataFrame(rates)
+# 시간(초)을 날짜 시간 형식으로 변환
+rates_frame['time'] = pd.to_datetime(rates_frame['time'], unit='s')
+
+# 데이터 표시
+print("\n데이터와 함께 dataframe 표시")
+print(rates_frame)
 
 
 mt5.shutdown()

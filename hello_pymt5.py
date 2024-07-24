@@ -50,6 +50,14 @@ def initialize_mt5():
             print("terminal_info() as dataframe:")
             print(df)
 
+        # 금융상품의 수 가져오기
+        symbols = mt5.symbols_total()
+        if symbols > 0:
+            print("Total symbols =", symbols)
+        else:
+            print("심볼을 찾을 수 없습니다")
+
+
 
 
     else:
@@ -57,5 +65,9 @@ def initialize_mt5():
 
 
 initialize_mt5()
+
+
+
+mt5.shutdown()
 
 print("된다! 하면된다~!!")

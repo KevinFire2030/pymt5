@@ -171,7 +171,29 @@ rates_frame['time'] = pd.to_datetime(rates_frame['time'], unit='s')
 print("\n데이터와 함께 dataframe 표시")
 print(rates_frame)
 
+# get 10 GBPUSD D1 bars from the current day
+rates = mt5.copy_rates_from_pos("NAS100", mt5.TIMEFRAME_H1, 0, 10)
 
+# MetaTrader 5 터미널 연결 종료
 mt5.shutdown()
+# 수집된 데이터의 각 요소를 새 줄로 표시
+print("수집된 데이터를 '있는 그대로' 표시")
+
+if rates != None:
+    for rate in rates:
+        print(rate)
+else:
+    print("None : ", mt5.last_error())
+
+# 가져온 데이터로 DataFrame 생성
+rates_frame = pd.DataFrame(rates)
+# 시간(초)을 날짜 시간 형식으로 변환
+rates_frame['time'] = pd.to_datetime(rates_frame['time'], unit='s')
+
+# 데이터 표시
+print("\n데이터와 함께 dataframe 표시")
+print(rates_frame)
+
+
 
 print("된다! 하면된다~!!")

@@ -62,11 +62,32 @@ def initialize_mt5():
 
     else:
         print("Initialize failed", mt5.last_error())
+        quit()
 
 
 initialize_mt5()
 
 
+# 모든 심볼 가져오기
+symbols=mt5.symbols_get()
+print('Symbols: ', len(symbols))
+count=0
+# 첫 다섯 개 표시
+for s in symbols:
+    count+=1
+    print("{}. {}".format(count,s.name))
+    #if count==5: break
+print()
+
+
+# 모든 심볼 가져오기
+# group = Index-Cash
+group_symbols=mt5.symbols_get(group="*USD*")
+print('len(*USD*)) ', len(group_symbols))
+# 첫 다섯 개 표시
+for s in group_symbols:
+    print(s.name)
+print()
 
 mt5.shutdown()
 

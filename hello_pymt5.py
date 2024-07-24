@@ -1,5 +1,7 @@
 import MetaTrader5 as mt5
 import pandas as pd
+pd.set_option('display.max_columns', 500) # 표시될 칼럼 수
+pd.set_option('display.width', 1500)      # 표시할 최대 표 너비
 import time
 from datetime import datetime
 # 표준 시간대 작업을 위한 pytz 모듈
@@ -153,7 +155,7 @@ timezone = pytz.timezone("Etc/UTC")
 # 로컬 시간대 오프셋 구현을 방지하기 위해 UTC 표준 시간대에 'datetime' 개체를 생성합니다.
 utc_from = datetime(2024, 7, 24, tzinfo=timezone)
 # UTC 표준 시간대로 2020년 1월 10일부터 10개의 EURD H4 막대를 설치
-rates = mt5.copy_rates_from("NAS100", mt5.TIMEFRAME_H1, utc_from, 10)
+rates = mt5.copy_rates_from("NAS100", mt5.TIMEFRAME_D1, utc_from, 10)
 
 # MetaTrader 5 터미널 연결 종료
 mt5.shutdown()
@@ -171,6 +173,7 @@ rates_frame['time'] = pd.to_datetime(rates_frame['time'], unit='s')
 print("\n데이터와 함께 dataframe 표시")
 print(rates_frame)
 
+"""
 # get 10 GBPUSD D1 bars from the current day
 rates = mt5.copy_rates_from_pos("NAS100", mt5.TIMEFRAME_H1, 0, 10)
 
@@ -193,7 +196,31 @@ rates_frame['time'] = pd.to_datetime(rates_frame['time'], unit='s')
 # 데이터 표시
 print("\n데이터와 함께 dataframe 표시")
 print(rates_frame)
+"""
 
+# set time zone to UTC
+timezone = pytz.timezone("Etc/UTC")
+# 로컬 표준 시간대를 구현하지 않도록 UTC 표준 시간대에 'datetime' 개체를 생성합니다 offset
+utc_from = datetime(2024, 7, 1, tzinfo=timezone)
+utc_to = datetime(2024, 7, 23, tzinfo=timezone)
+# UTC 표준 시간대에서 2020.01.10 00:00 - 2020.01.11 13:00의 간격 내에 USDJPY M5에서 막대를 가져옵니다
+rates = mt5.copy_rates_range("NAS100", mt5.TIMEFRAME_D1, utc_from, utc_to)
 
+# 수집된 데이터의 각 요소를 새 라인로 표시
+print("수집된 데이터를 '있는 그대로' 표시")
+counter = 0
+for rate in rates:
+    counter += 1
+    if counter <= 10:
+        print(rate)
+
+# 가져온 데이터로 DataFrame 생성
+rates_frame = pd.DataFrame(rates)
+# 시간(초)을 'datetime' 형식으로 변환합니다.
+rates_frame['time'] = pd.to_datetime(rates_frame['time'], unit='s')
+
+# display data
+print("\n데이터와 함께 dataframe 표시")
+print(rates_frame.head(10))
 
 print("된다! 하면된다~!!")

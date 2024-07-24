@@ -72,7 +72,7 @@ def initialize_mt5():
 
 initialize_mt5()
 
-
+"""
 # 모든 심볼 가져오기
 symbols=mt5.symbols_get()
 print('Symbols: ', len(symbols))
@@ -126,7 +126,7 @@ print("Show symbol_info_tick(\"NAS100\")._asdict():")
 symbol_info_tick_dict = mt5.symbol_info_tick("NAS100")._asdict()
 for prop in symbol_info_tick_dict:
     print("  {}={}".format(prop, symbol_info_tick_dict[prop]))
-
+"""
 
 """
 # EURUSD(Depth of Market)에 대한 마켓 심층 업데이트 구독
@@ -150,6 +150,7 @@ else:
     print("mt5.market_book_add('NAS100') failed, error code =",mt5.last_error())
 """
 
+"""
 # 표준 시간대를 UTC로 설정
 timezone = pytz.timezone("Etc/UTC")
 # 로컬 시간대 오프셋 구현을 방지하기 위해 UTC 표준 시간대에 'datetime' 개체를 생성합니다.
@@ -193,7 +194,7 @@ print("\n데이터와 함께 dataframe 표시")
 print(rates_frame)
 
 """
-
+"""
 # set time zone to UTC
 timezone = pytz.timezone("Etc/UTC")
 # 로컬 표준 시간대를 구현하지 않도록 UTC 표준 시간대에 'datetime' 개체를 생성합니다 offset
@@ -220,7 +221,7 @@ print("\n데이터와 함께 dataframe 표시")
 print(rates_frame.head(10))
 
 """
-
+"""
 # set time zone to UTC
 timezone = pytz.timezone("Etc/UTC")
 # 로컬 시간대 오프셋 구현을 방지하기 위해 UTC 표준 시간대에 'datetime' 개체를 생성
@@ -276,5 +277,109 @@ ticks_frame['time'] = pd.to_datetime(ticks_frame['time'], unit='s')
 # display data
 print("\n틱과 함께 dataframe 표시")
 print(ticks_frame)
+
+
+"""
+
+# 계정 통화 가져오기
+account_currency=mt5.account_info().currency
+print("계정 통화:",account_currency)
+
+# 요청 구조 준비
+symbol = "NAS100"
+symbol_info = mt5.symbol_info(symbol)
+if symbol_info is None:
+    print("심볼 찾을 수 없음, order_check() 호출 불가")
+    mt5.shutdown()
+    quit()
+
+# 심볼을 MarketWatch에서 사용할 수 없는 경우 추가
+if not symbol_info.visible:
+    print("심볼 보이지 않음, trying to switch on")
+    if not mt5.symbol_select(symbol, True):
+        print("symbol_select({}}) failed, exit", symbol)
+        mt5.shutdown()
+        quit()
+
+# 요청 준비
+lot = 10
+point = mt5.symbol_info(symbol).point
+price = mt5.symbol_info_tick(symbol).ask
+deviation = 10
+request = {
+    "action": mt5.TRADE_ACTION_DEAL,
+    "symbol": symbol,
+    "volume": lot,
+    "type": mt5.ORDER_TYPE_BUY,
+    #"price": price,
+    #"sl": price - 100 * point,
+    #"tp": price + 100 * point,
+    #"deviation": deviation,
+    #"magic": 234000,
+    #"comment": "python script open",
+    #"type_time": mt5.ORDER_TIME_GTC,
+    #"type_filling": mt5.ORDER_FILLING_RETURN,
+}
+
+# 거래 요청 전송
+result = mt5.order_send(request)
+# 실행 결과 확인
+print("1. order_send(): by {} {} lots at {} with deviation={} points".format(symbol, lot, price, deviation));
+if result.retcode != mt5.TRADE_RETCODE_DONE:
+    print("2. order_send failed, retcode={}".format(result.retcode))
+    # 결과를 사전으로 요청하여 요소별로 표시
+    result_dict = result._asdict()
+    for field in result_dict.keys():
+        print("   {}={}".format(field, result_dict[field]))
+        # 거래 요청 구조인 경우 요소별로도 표시
+        if field == "request":
+            traderequest_dict = result_dict[field]._asdict()
+            for tradereq_filed in traderequest_dict:
+                print("       traderequest: {}={}".format(tradereq_filed, traderequest_dict[tradereq_filed]))
+    print("shutdown() and quit")
+    mt5.shutdown()
+    quit()
+
+print("2. order_send done, ", result)
+print("   opened position with POSITION_TICKET={}".format(result.order))
+print("   sleep 2 seconds before closing position #{}".format(result.order))
+
+time.sleep(2)
+# 마감 요청 생성
+position_id = result.order
+price = mt5.symbol_info_tick(symbol).bid
+deviation = 20
+request = {
+    "action": mt5.TRADE_ACTION_DEAL,
+    "symbol": symbol,
+    "volume": lot,
+    "type": mt5.ORDER_TYPE_SELL,
+    "position": position_id,
+    "price": price,
+    "deviation": deviation,
+    "magic": 234000,
+    "comment": "python script close",
+    "type_time": mt5.ORDER_TIME_GTC,
+    "type_filling": mt5.ORDER_FILLING_RETURN,
+}
+# 거래 요청 전송
+result = mt5.order_send(request)
+# 실행 결과 확인
+print("3. close position #{}: sell {} {} lots at {} with deviation={} points".format(position_id, symbol, lot, price,
+                                                                                     deviation));
+if result.retcode != mt5.TRADE_RETCODE_DONE:
+    print("4. order_send failed, retcode={}".format(result.retcode))
+    print("   result", result)
+else:
+    print("4. position #{} closed, {}".format(position_id, result))
+    # 결과를 사전으로 요청하여 요소별로 표시
+    result_dict = result._asdict()
+    for field in result_dict.keys():
+        print("   {}={}".format(field, result_dict[field]))
+        # 거래 요청 구조인 경우 요소별로도 표시
+        if field == "request":
+            traderequest_dict = result_dict[field]._asdict()
+            for tradereq_filed in traderequest_dict:
+                print("       traderequest: {}={}".format(tradereq_filed, traderequest_dict[tradereq_filed]))
 
 print("된다! 하면된다~!!")

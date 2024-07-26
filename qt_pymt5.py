@@ -4,10 +4,15 @@ from PyQt5.QAxContainer import *
 from PyQt5.QtCore import *
 from PyQt5 import uic
 import time
-from datetime import datetime
+#from datetime import datetime
+import datetime
+# 표준 시간대 작업을 위한 pytz 모듈
+import pytz
 import pandas as pd
 import numpy as np
 pd.options.mode.chained_assignment = None
+pd.set_option('display.max_columns', 500) # 표시될 칼럼 수
+pd.set_option('display.width', 1500)      # 표시할 최대 표 너비
 import pandas_ta as ta
 import MetaTrader5 as mt5
 
@@ -51,13 +56,158 @@ class PyMT5(QMainWindow, main_form):
         self.menu_history_deals_total.triggered.connect(self.action_history_deals_total)
         self.menu_history_deals_get.triggered.connect(self.action_history_deals_get)
 
+        # 차트
+        self.menu_copy_rates_from.triggered.connect(self.action_copy_rates_from)
+        self.menu_copy_rates_from_pos.triggered.connect(self.action_copy_rates_from_pos)
+        self.menu_copy_rates_range.triggered.connect(self.action_copy_rates_range)
+        self.menu_copy_ticks_from.triggered.connect(self.action_copy_ticks_from)
+        self.menu_copy_ticks_range.triggered.connect(self.action_copy_ticks_range)
+        self.menu_real_time_chart.triggered.connect(self.action_real_time_chart)
+
+        pass
+
+
+    def action_real_time_chart(self):
+
+        pass
+
+    def action_copy_ticks_range(self):
+
+        # set time zone to UTC
+        timezone = pytz.timezone("Etc/UTC")
+        # 로컬 표준 시간대를 구현하지 않도록 UTC 표준 시간대에 'datetime' 개체를 생성합니다 offset
+        utc_from = datetime.datetime(2024, 7, 26, tzinfo=timezone)
+        # utc_to = datetime(2020, 1, 11, hour=13, tzinfo=timezone)
+        utc_to = datetime.datetime.now(timezone) + datetime.timedelta(hours=3)
+        # UTC 표준 시간대에서 2020.01.10 00:00 - 2020.01.11 13:00의 간격 내에 USDJPY M5에서 막대를 가져옵니다
+        rates = mt5.copy_ticks_range("NAS100", utc_from, utc_to, mt5.COPY_TICKS_ALL)
+       #rates = mt5.copy_ticks_range("NAS100", utc_from, utc_to, mt5.COPY_TICKS_INFO)
+
+        if rates is None:
+            print(f"에러: {mt5.last_error()}")
+
+        else:
+            # 가져온 데이터로 DataFrame 생성
+            rates_frame = pd.DataFrame(rates)
+            # 시간(초)을 날짜 시간 형식으로 변환
+            rates_frame['time'] = pd.to_datetime(rates_frame['time'], unit='s')
+
+            # 데이터 표시
+            print("\n데이터와 함께 dataframe 표시")
+            print(rates_frame)
+
+        pass
+
+    def action_copy_ticks_from(self):
+
+        # 표준 시간대를 UTC로 설정
+        timezone = pytz.timezone("Etc/UTC")
+        #utc_from = datetime.datetime.now(timezone) + datetime.timedelta(hours=3)
+        utc_from = datetime.datetime(2024, 1, 1, tzinfo=timezone)
+        # UTC 표준 시간대로 2020년 1월 10일부터 10개의 EURD H4 막대를 설치
+        rates = mt5.copy_ticks_from("NAS100", utc_from, 10000000, mt5.COPY_TICKS_ALL)
+
+        # 가져온 데이터로 DataFrame 생성
+        rates_frame = pd.DataFrame(rates)
+        # 시간(초)을 날짜 시간 형식으로 변환
+        rates_frame['time'] = pd.to_datetime(rates_frame['time'], unit='s')
+
+        # 데이터 표시
+        print("\n데이터와 함께 dataframe 표시")
+        print(rates_frame)
+
+        pass
+
+    def action_copy_rates_range(self):
+
+        # set time zone to UTC
+        timezone = pytz.timezone("Etc/UTC")
+        # 로컬 표준 시간대를 구현하지 않도록 UTC 표준 시간대에 'datetime' 개체를 생성합니다 offset
+        utc_from = datetime.datetime(2000, 6, 1, tzinfo=timezone)
+        #utc_to = datetime(2020, 1, 11, hour=13, tzinfo=timezone)
+        utc_to = datetime.datetime.now(timezone) + datetime.timedelta(hours=3)
+        # UTC 표준 시간대에서 2020.01.10 00:00 - 2020.01.11 13:00의 간격 내에 USDJPY M5에서 막대를 가져옵니다
+        rates = mt5.copy_rates_range("NAS100", mt5.TIMEFRAME_D1, utc_from, utc_to)
+
+        if rates is None:
+            print(f"에러: {mt5.last_error()}")
+
+        else:
+            # 가져온 데이터로 DataFrame 생성
+            rates_frame = pd.DataFrame(rates)
+            # 시간(초)을 날짜 시간 형식으로 변환
+            rates_frame['time'] = pd.to_datetime(rates_frame['time'], unit='s')
+
+            # 데이터 표시
+            print("\n데이터와 함께 dataframe 표시")
+            print(rates_frame)
+
+
+        pass
+
+    def action_copy_rates_from_pos(self):
+
+        # 표준 시간대를 UTC로 설정
+        timezone = pytz.timezone("Etc/UTC")
+        # 로컬 시간대 오프셋 구현을 방지하기 위해 UTC 표준 시간대에 'datetime' 개체를 생성합니다.
+        utc_from = datetime.datetime.now(timezone) + datetime.timedelta(hours=3)
+
+        # 막대의 번호는 현재에서 과거로 매겨집니다. 그러므로, 0 막대는 현재의 것을 의미합니다.
+        rates = mt5.copy_rates_from_pos("NAS100", mt5.TIMEFRAME_M1, 0, 10)
+
+        # 2달까지는 되는데 3개월부터는 안되네
+        #rates = mt5.copy_rates_from_pos("NAS100", mt5.TIMEFRAME_M1, 0, 1*60*24*30*2)
+
+        if rates is None:
+            print(f"에러: {mt5.last_error()}")
+
+        else:
+            # 가져온 데이터로 DataFrame 생성
+            rates_frame = pd.DataFrame(rates)
+            # 시간(초)을 날짜 시간 형식으로 변환
+            rates_frame['time'] = pd.to_datetime(rates_frame['time'], unit='s')
+
+            # 데이터 표시
+            print("\n데이터와 함께 dataframe 표시")
+            print(rates_frame)
+
+        pass
+
+    def action_copy_rates_from(self):
+
+        # 표준 시간대를 UTC로 설정
+        timezone = pytz.timezone("Etc/UTC")
+        #timezone = pytz.timezone("Europe/Moscow")
+        #timezone = pytz.timezone('Asia/Seoul')
+        # 로컬 시간대 오프셋 구현을 방지하기 위해 UTC 표준 시간대에 'datetime' 개체를 생성합니다.
+        #utc_from = datetime(2024, 7, 26, 20, 0, 0, tzinfo=timezone)
+        utc_from = datetime.datetime.now(timezone) + datetime.timedelta(hours=3)
+
+        #utc_from = datetime.utcnow()
+
+        #utc_from = datetime(2024, 7, 26, 20, 0, 0)
+
+        #utc_from = datetime(2024, 7, 25, 17, 46)
+
+        # UTC 표준 시간대로 2020년 1월 10일부터 10개의 EURD H4 막대를 설치
+        rates = mt5.copy_rates_from("NAS100", mt5.TIMEFRAME_M1, utc_from, 10)
+
+        # 가져온 데이터로 DataFrame 생성
+        rates_frame = pd.DataFrame(rates)
+        # 시간(초)을 날짜 시간 형식으로 변환
+        rates_frame['time'] = pd.to_datetime(rates_frame['time'], unit='s')
+
+        # 데이터 표시
+        print("\n데이터와 함께 dataframe 표시")
+        print(rates_frame)
+
         pass
 
     def action_history_deals_get(self):
 
         # 내역에서 딜 수 가져오기
-        from_date = datetime(2020, 1, 1)
-        to_date = datetime.now()
+        from_date = datetime.datetime(2020, 1, 1)
+        to_date = datetime.datetime.now()
         # 이름에 지정된 간격 내에 "GBP"가 포함된 심볼에 대한 딜 가져오기
         deals = mt5.history_deals_get(from_date, to_date, group="*GBP*")
         if deals == None:
@@ -99,8 +249,8 @@ class PyMT5(QMainWindow, main_form):
     def action_history_deals_total(self):
 
         # 내역에서 딜 수 가져오기
-        from_date = datetime(2020, 1, 1)
-        to_date = datetime.now()
+        from_date = datetime.datetime(2020, 1, 1)
+        to_date = datetime.datetime.now()
         deals = mt5.history_deals_total(from_date, to_date)
         if deals > 0:
             print("총 딜=", deals)
@@ -112,8 +262,8 @@ class PyMT5(QMainWindow, main_form):
     def action_history_orders_get(self):
 
         # 내역에서 주문 수를 가져옵니다
-        from_date = datetime(2020, 1, 1)
-        to_date = datetime.now()
+        from_date = datetime.datetime(2020, 1, 1)
+        to_date = datetime.datetime.now()
         history_orders = mt5.history_orders_get(from_date, to_date, group="*NAS*")
         if history_orders == None:
             print("No history orders with group=\"*NAS*\", error code={}".format(mt5.last_error()))
@@ -146,8 +296,8 @@ class PyMT5(QMainWindow, main_form):
     def action_history_orders_total(self):
 
         # 내역에서 주문 수를 가져옵니다
-        from_date = datetime(2020, 1, 1)
-        to_date = datetime.now()
+        from_date = datetime.datetime(2020, 1, 1)
+        to_date = datetime.datetime.now()
         history_orders = mt5.history_orders_total(from_date, to_date)
         if history_orders > 0:
             print("Total history orders=", history_orders)
